@@ -1,0 +1,81 @@
+console.log "injected"
+
+selector = "#listContainer .msgListItem.buddyRichInfoC"
+targetUrl = "http://42.120.22.130/wechatInDB.php"
+updateListeners = ()->
+  doms = $(selector)
+  #console.log 'doms:',doms
+  for dom in doms
+    newButton = document.createElement("button")
+    styleObj =
+      'margin-top':0
+      'background-color':'rgb(176, 202, 248)'
+      'border':'none'
+    $(newButton).css(styleObj)
+    $(newButton).hover((->
+      $(@).css('background-color','rgb(186, 222, 255)')
+      $(@).css('cursor','pointer')
+      )
+    ,(->
+      $(@).css('background-color','rgb(176, 202, 248)')
+      $(@).css('cursor','auto')
+      ))
+    newButton.className = "wcInject_catchBtn"
+    newButton.innerHTML = "发送此消息"
+    newButton.targetDom = dom
+    newButton.onclick = ()->
+      catchDomInfo @targetDom
+    $(dom).find(".opt.oper.right").append(newButton).css('overflow','visible')
+
+catchDomInfo = (targetDom)->
+  console.warn 'targetClicked',targetDom
+  targetJ = $(targetDom)
+  obj =
+    id:(->
+      for atb in targetDom.attributes
+        if atb.name is 'data-id' then return atb.value
+        )()
+    fakeId:(->
+      J = targetJ.find('.wxMsgArea .msgSender.left')
+      console.log J
+      for atb in J[0].attributes
+        if atb.name is 'data-fakeid' then return atb.value
+      )()
+    nickName:(->
+      J = targetJ.find('.wxMsgArea .msgSender.left')
+      return J.text()
+      )()
+    contentType:(->
+      J = targetJ.find('.wxMsg.clr')
+      if J.find('.wxMsgImg').length > 0 then return 'img'
+      else return 'text'
+      )()
+    #text/img
+  if obj.contentType is 'img'
+    obj.content = targetJ.find('.wxMsgImg img')[0].src
+  else
+    text = targetJ.find('.wxMsg.clr').text()
+    arr = []
+    for c in text.split(" ")
+      arr.push c if c
+    obj.content = arr.join('')
+  console.log obj
+  $.ajax
+    type:'post'
+    url:targetUrl
+    data:obj
+    success:(data,textStatus,jqXHR)->
+      console.log 'success'
+      sendNotification '发送成功',1000
+    error:(data,textStatus,jqXHR)->
+      console.error 'post failed'
+      sendNotification '发送失败，请联系管理员'
+      
+sendNotification = (msg,timeout=2000,picUrl='icon.png',title="微信墙管理插件")->
+  return
+  notification = webkitNotifications.createNotification(picUrl,title,msg)
+  notification.show()
+  window.setTimeout (->notification.close()),2000
+
+updateListeners()
+

@@ -1,0 +1,18 @@
+{
+    "manifest_version": 2,
+
+    "name": "wechat-extension",
+    "description": "微信墙管理工具",
+    "version": "1.0",
+    "permissions": [
+				"http://42.120.22.130/wechatInDB.php",
+				"notifications"
+    ],
+    "content_scripts": [
+				{
+						"matches": ["https://mp.weixin.qq.com/cgi-bin/getmessage?*"],
+						"js": ["jquery.js","contentScript.js"]
+				}
+    ],
+    "web_accessible_resources": ["icon.png"]
+}
